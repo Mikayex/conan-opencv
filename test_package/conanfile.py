@@ -6,7 +6,7 @@ username = os.getenv("CONAN_USERNAME", "memsharded")
 
 class OpenCVTestConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    requires = "OpenCV/2.4.13@%s/%s" % (username, channel)
+    requires = "OpenCV/3.1.0@%s/%s" % (username, channel)
     generators = "cmake"
 
     def build(self):

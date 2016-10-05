@@ -5,16 +5,16 @@ import os
 
 class OpenCVConan(ConanFile):
     name = "OpenCV"
-    version = "2.4.13"
+    version = "3.1.0"
     license = "LGPL"
     url = "https://github.com/memsharded/conan-opencv.git"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}
-    default_options = "shared=False"
+    options = {"shared": [True, False], "contrib": [True, False]}
+    default_options = "shared=False", "contrib=False"
     generators = "cmake"
 
     def source(self):
-        tools.download("https://github.com/Itseez/opencv/archive/2.4.13.zip", "opencv.zip")
+        tools.download("https://github.com/opencv/opencv/archive/%s.zip" % self.version, "opencv.zip")
         tools.unzip("opencv.zip")
         os.unlink("opencv.zip")
         tools.replace_in_file("opencv-%s/CMakeLists.txt" % self.version, "project(OpenCV CXX C)",
@@ -36,7 +36,7 @@ conan_basic_setup()""")
     def build(self):
         cmake = CMake(self.settings)
         shared = "-DBUILD_SHARED_LIBS=ON" if self.options.shared else "-DBUILD_SHARED_LIBS=OFF"
-        cmake_flags = ("%s -DBUILD_EXAMPLES=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_opencv_apps=OFF -DBUILD_PERF_TESTS=OFF"
+        cmake_flags = ("%s -DBUILD_EXAMPLES=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_opencv_apps=OFF -DBUILD_PERF_TESTS=OFF -DWITH_IPP=OFF"
                         % (shared) )
         if self.settings.compiler == "Visual Studio":
             cmake_flags +=  " -DBUILD_WITH_STATIC_CRT=ON" if "MT" in str(self.settings.compiler.runtime) else " -DBUILD_WITH_STATIC_CRT=OFF"
@@ -44,8 +44,8 @@ conan_basic_setup()""")
         self.run('cmake opencv-%s %s %s' % (self.version, cmake_flags, cmake.command_line))
         self.run("cmake --build . %s" % cmake.build_config)
 
-    opencv_libs = ["contrib","stitching", "nonfree", "superres", "ocl", "ts", "videostab", "gpu", "photo", "objdetect", 
-                   "legacy", "video", "ml", "calib3d", "features2d", "highgui", "imgproc", "flann", "core"]
+    opencv_libs = ["stitching", "superres", "videostab", "photo", "objdetect", 
+                   "video", "ml", "calib3d", "features2d", "imgcodecs", "videoio","highgui", "imgproc", "flann", "core"]
 
     def package(self):
         self.copy("*.h*", "include", "opencv-%s/include" % self.version)
@@ -59,8 +59,8 @@ conan_basic_setup()""")
         self.copy("*.xml", "data", "opencv-%s/data" % (self.version))
         self.copy("*opencv.pc", keep_path=False)
         if not self.options.shared:
-            self.copy("*.lib", "lib", "3rdparty/lib", keep_path=False)
-            self.copy("*.a", "lib", "3rdparty/lib", keep_path=False)
+            self.copy("*.lib", "lib", "3rdparty", keep_path=False)
+            self.copy("*.a", "lib", "3rdparty", keep_path=False)
 
     def package_info(self):
         version = self.version.replace(".", "") if self.settings.os == "Windows" else ""
@@ -68,7 +68,7 @@ conan_basic_setup()""")
             self.cpp_info.libs.append("opencv_%s%s" % (lib, version))
 
         if self.settings.os == "Windows" and not self.options.shared:
-            self.cpp_info.libs.extend(["IlmImf", "libjasper", "libjpeg", "libpng", "libtiff", "zlib"])
+            self.cpp_info.libs.extend(["libwebp", "IlmImf", "libjasper", "libjpeg", "libpng", "libtiff", "zlib"])
 
         if self.settings.os == "Linux":     
             if not self.options.shared:
