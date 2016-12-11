@@ -18,42 +18,43 @@ class OpenCVConan(ConanFile):
         tools.unzip("opencv.zip")
         os.unlink("opencv.zip")
         tools.replace_in_file("opencv-%s/CMakeLists.txt" % self.version, "project(OpenCV CXX C)",
-                                """project(OpenCV CXX C)
+                              """project(OpenCV CXX C)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()""")
-     
+
     def system_requirements(self):
         pack_names = None
         if os_info.linux_distro == "ubuntu":
             pack_names = "libgtk2.0-dev", "pkg-config"
-  
+
         if pack_names:
             installer = SystemPackageTool()
-            installer.update() # Update the package database
+            installer.update()  # Update the package database
             for pack_name in pack_names:
-                installer.install(pack_name) # Install the package
+                installer.install(pack_name)  # Install the package
 
     def build(self):
         cmake = CMake(self.settings)
         shared = "-DBUILD_SHARED_LIBS=ON" if self.options.shared else "-DBUILD_SHARED_LIBS=OFF"
-        cmake_flags = ("%s -DBUILD_EXAMPLES=OFF -DBUILD_DOCS=OFF -DBUILD_TESTS=OFF -DBUILD_opencv_apps=OFF -DBUILD_PERF_TESTS=OFF"
-                        % (shared) )
+        cmake_flags = [shared, "-DBUILD_EXAMPLES=OFF", "-DBUILD_DOCS=OFF", "-DBUILD_TESTS=OFF",
+                       "-DBUILD_opencv_apps=OFF", "-DBUILD_PERF_TESTS=OFF"]
         if self.settings.compiler == "Visual Studio":
-            cmake_flags +=  " -DBUILD_WITH_STATIC_CRT=ON" if "MT" in str(self.settings.compiler.runtime) else " -DBUILD_WITH_STATIC_CRT=OFF"
- 
-        self.run('cmake opencv-%s %s %s' % (self.version, cmake_flags, cmake.command_line))
+            cmake_flags.append("-DBUILD_WITH_STATIC_CRT=ON" if "MT" in str(self.settings.compiler.runtime)
+                               else " -DBUILD_WITH_STATIC_CRT=OFF")
+
+        self.run('cmake opencv-%s %s %s' % (self.version, ' '.join(cmake_flags), cmake.command_line))
         self.run("cmake --build . %s" % cmake.build_config)
 
-    opencv_libs = ["contrib","stitching", "nonfree", "superres", "ocl", "ts", "videostab", "gpu", "photo", "objdetect", 
-                   "legacy", "video", "ml", "calib3d", "features2d", "highgui", "imgproc", "flann", "core"]
+    opencv_libs = ["contrib", "stitching", "nonfree", "superres", "ocl", "ts", "videostab", "gpu", "photo",
+                   "objdetect", "legacy", "video", "ml", "calib3d", "features2d", "highgui", "imgproc", "flann", "core"]
 
     def package(self):
         self.copy("*.h*", "include", "opencv-%s/include" % self.version)
-        self.copy("*.h*","include/opencv2","opencv2") #opencv2/opencv_modules.hpp is generated
+        self.copy("*.h*", "include/opencv2", "opencv2")  # opencv2/opencv_modules.hpp is generated
         for lib in self.opencv_libs:
             self.copy("*.h*", "include", "opencv-%s/modules/%s/include" % (self.version, lib))
         self.copy("*.lib", "lib", "lib", keep_path=False)
-        self.copy("*.a", "lib", "lib", keep_path=False) 
+        self.copy("*.a", "lib", "lib", keep_path=False)
         self.copy("*.dll", "bin", "bin", keep_path=False)
         self.copy("*.dylib", "lib", "lib", keep_path=False)
         self.copy("*.so", "lib", "lib", keep_path=False)
@@ -71,7 +72,7 @@ conan_basic_setup()""")
         if self.settings.os == "Windows" and not self.options.shared:
             self.cpp_info.libs.extend(["IlmImf", "libjasper", "libjpeg", "libpng", "libtiff", "zlib"])
 
-        if self.settings.os == "Linux":     
+        if self.settings.os == "Linux":
             if not self.options.shared:
                 other_libs = self.collect_libs()
                 for other_lib in ["IlmImf", "libjasper", "libjpeg", "libpng", "libtiff"]:
@@ -80,7 +81,7 @@ conan_basic_setup()""")
                     else:
                         self.cpp_info.libs.append(other_lib.replace("lib", ""))
 
-            self.cpp_info.libs.extend(["gthread-2.0", "freetype", "fontconfig", "glib-2.0", "gobject-2.0", "pango-1.0", "pangoft2-1.0", "gio-2.0", "gdk_pixbuf-2.0",
-                                        "cairo", "atk-1.0", "pangocairo-1.0"," gtk-x11-2.0", "gdk-x11-2.0", "rt", "pthread", "m", "dl", "z"])
-	    
-                    
+            self.cpp_info.libs.extend(["gthread-2.0", "freetype", "fontconfig", "glib-2.0", "gobject-2.0",
+                                       "pango-1.0", "pangoft2-1.0", "gio-2.0", "gdk_pixbuf-2.0", "cairo", "atk-1.0",
+                                       "pangocairo-1.0", " gtk-x11-2.0", "gdk-x11-2.0", "rt", "pthread", "m", "dl",
+                                       "z"])
