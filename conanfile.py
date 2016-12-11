@@ -6,7 +6,7 @@ import os
 class OpenCVConan(ConanFile):
     name = "OpenCV"
     version = "2.4.13"
-    license = "LGPL"
+    license = "BSD"
     url = "https://github.com/memsharded/conan-opencv.git"
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
